@@ -2,175 +2,158 @@ import '@logseq/libs'
 
 const apiKey = "TjzU95V4JHVry7D_iigag7nKd940el7fMBB9KgBLpRY"; // Unsplash Dummy API key
 
-const fetchDataFromUnsplash = async (searchTerm: string, currentPage: number) => {
-	const endpoint = `https://api.unsplash.com/search/photos`
-	const params = `?query=${encodeURIComponent(searchTerm)}&per_page=30&page=${currentPage}&client_id=${apiKey}`
-	const response = await fetch(endpoint + params)
-	if (!response.ok) throw Error(response.statusText)
-	const json = await response.json()
-	return json
+const removeChildren = (el: HTMLElement) => {
+	while (el.firstChild) {
+		el.removeChild(el.lastChild)
+	}
 }
 
 /**
  * main entry
  */
 async function main() {
-	const appUserConfig = await logseq.App.getUserConfigs()
+	let elementsCreated = false
 	const container = document.createElement('div')
-	document.getElementById('app').appendChild(container)
 	container.classList.add('unsplash-wrapper')
+	document.getElementById('app').appendChild(container)
+	
+	const appUserConfig = await logseq.App.getUserConfigs()
 
-	const createUnsplash = () => {
+	appUserConfig.preferredThemeMode === "dark" && container.classList.add('dark')
 
-		let currentPage = 1
-		let searchTerm: string
+	logseq.App.onThemeModeChanged(({ mode }) => {
+		mode === "dark"
+			? container.classList.add('dark')
+			: container.classList.remove('dark')
+	})
 
+	const createDomElements = () => {
 		// Create input field
 		const form = document.createElement("form")
 		form.classList.add('search-form')
-		form.addEventListener("submit", (event: Event) => {
-			event.preventDefault()
-			currentPage = 1
-
-			const inputValue: string = (<HTMLInputElement>(
-				document.querySelector(".search-input")
-			)).value
-			searchTerm = inputValue.trim()
-			fetchResults(searchTerm)
-		})
-		
 		form.innerHTML = `
 			<input class="search-input" type="search" value="" placeholder="Search Unsplash" />
 			<button class="search-button" type="submit" >Search</button>
 		`
-
 		container.appendChild(form)
-
-
+	
 		// Create image grid for search results
-
 		const resultContainer = document.createElement("div")
 		resultContainer.classList.add("result-container")
+	
+		resultContainer.innerHTML = `
+			<div class="col-1"></div>
+			<div class="col-2"></div>
+			<button class="show-more">Show More</button>
+		`
 		container.appendChild(resultContainer)
+	}
 
-		const searchResultsBox = document.createElement("div")
-		searchResultsBox.classList.add("search-results")
-		resultContainer.appendChild(searchResultsBox)
+	const cleanupResults = () => {
+		removeChildren(document.querySelector('.col-1'))
+		removeChildren(document.querySelector('.col-2'))
+	}
 
-		const resultColumnLeft = document.createElement("div")
-		const resultColumnRight = document.createElement("div")
+	const initUnsplash = () => {
 
-		searchResultsBox.appendChild(resultColumnLeft)
-		searchResultsBox.appendChild(resultColumnRight)
+		let currentPage = 1
+		let searchTerm = ""
 
+		if (!elementsCreated) {
+			createDomElements()
+			elementsCreated = true
+		}
 
-		// Create pagination: WORK IN PROGRESS
+		// Hide results section on start
+		document.querySelector(".result-container").classList.add("hidden");
+		(<HTMLInputElement>(document.querySelector(".search-input"))).focus();
 
-		const paginationDiv = document.createElement("div")
-		paginationDiv.classList.add("pagination")
-		container.appendChild(paginationDiv)
+		// Handle form submission
+		document.querySelector('.search-form').addEventListener("submit", (event: Event) => {
+			event.preventDefault()
+			currentPage = 1
 
-		const buttonPrevious = document.createElement("button")
-		buttonPrevious.setAttribute("class", "hidden prev-btn")
-		buttonPrevious.innerText = "Previous"
-		paginationDiv.appendChild(buttonPrevious)
+			const inputValue = (<HTMLInputElement>(document.querySelector(".search-input"))).value
 
-		const buttonNext = document.createElement("button")
-		buttonNext.setAttribute("class", "hidden next-btn")
-		buttonNext.innerText = "Next"
-		paginationDiv.appendChild(buttonNext)
-
-
-		buttonNext.addEventListener("click", () => {
-			currentPage += 1
+			cleanupResults()
+			
+			searchTerm = inputValue.trim()
 			fetchResults(searchTerm)
-			document.querySelector(".search-results").animate({ scrollTop: 0 })
-		});
+			document.querySelector(".result-container").classList.remove("hidden")
+		})
 
-		buttonPrevious.addEventListener("click", () => {
-			currentPage -= 1
+		document.querySelector(".show-more").addEventListener("click", () => {
+			currentPage++
 			fetchResults(searchTerm)
-			document.querySelector(".search-results").animate({ scrollTop: 0 })
-		});
+		})
 
-		const pagination = (totalPages: number) => {
-			buttonNext.classList.remove("hidden")
-			if (currentPage >= totalPages) {
-				buttonNext.classList.add("hidden")
-			}
-
-			buttonPrevious.classList.add("hidden")
-			if (currentPage !== 1) {
-				buttonPrevious.classList.remove("hidden")
-			}
+		const fetchDataFromUnsplash = async (searchTerm: string) => {
+			const endpoint = `https://api.unsplash.com/search/photos`
+			const params = `?query=${encodeURIComponent(searchTerm)}&per_page=30&page=${currentPage}&client_id=${apiKey}`
+			const response = await fetch(endpoint + params)
+			if (!response.ok) throw Error(response.statusText)
+			const json = await response.json()
+			return json
 		}
 
 		async function fetchResults(searchTerm: string) {
 			try {
-				const results = await fetchDataFromUnsplash(searchTerm, currentPage)
-				pagination(results.total_pages)
-				displayResults(results)
+				const results = await fetchDataFromUnsplash(searchTerm)
+				addToResults(results)
 			} catch (err) {
 				console.log(err)
 			}
 		}
 
-		const displayResults = (json) => {
-
-			resultColumnLeft.innerHTML = ""
-			resultColumnRight.innerHTML = ""
+		const addToResults = (json) => {
 
 			json.results.forEach((result, index) => {
 				const imageDesc = result.alt_description
 				const imageUrl = result.urls.small
 				const photographer = result.user.name
-				const photographerPage = result.user.links.html
+				const photographerUrl = result.user.links.html
 
 				const resultItem = document.createElement("div")
 				resultItem.classList.add("result-item")
 
-				if (index % 2 === 0) {
-					resultColumnLeft.appendChild(resultItem)
-				} else {
-					resultColumnRight.appendChild(resultItem)
-				}
+				resultItem.innerHTML = `
+					<img class="result-image" src="${imageUrl}" alt="${imageDesc}" />
+					<a class="result-link" target="_blank" href="${photographerUrl}" >${photographer}</a>
+				`
 
-				const resultImage = document.createElement("img")
-				resultImage.classList.add("result-image")
-				resultImage.src = imageUrl
-				resultImage.alt = imageDesc
-				resultItem.appendChild(resultImage)
-
-				resultImage.addEventListener("click", () => {
+				resultItem.querySelector("img").addEventListener("click", () => {
 					logseq.Editor.insertAtEditingCursor(`![${imageDesc}](${imageUrl})`)
 					logseq.Editor.exitEditingMode()
 					logseq.hideMainUI()
+
+					cleanupResults();
+					(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 				})
 
-				const resultInfo = document.createElement("a")
-				resultInfo.classList.add("result-link")
-				resultInfo.innerText = photographer
-				resultInfo.href = photographerPage
-				resultInfo.target = "_blank"
-				resultItem.appendChild(resultInfo)
+				index % 2 === 0
+					? document.querySelector(".col-1").appendChild(resultItem)
+					: document.querySelector(".col-2").appendChild(resultItem)
 			})
 		}
 
 		// Handle escape keypress
 		document.addEventListener('keydown', (e) => {
-			if (e.key === "Escape") logseq.hideMainUI({ restoreEditingCursor: true })
 			e.stopPropagation()
+
+			if (e.key === "Escape") {
+				logseq.hideMainUI({ restoreEditingCursor: true })
+				cleanupResults();
+				(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
+			} 
 		}, false)
 
 		// Handle click outside window
 		document.addEventListener('click', (e) => {
 			if (!(e.target as HTMLElement).closest('.unsplash-wrapper')) {
 				logseq.hideMainUI({ restoreEditingCursor: true })
+				cleanupResults();
+				(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 			}
-		})
-
-		logseq.App.onThemeModeChanged(({ mode }) => {
-			// Change plugin window UI colors based on logseq theme
 		})
 	}
 
@@ -184,7 +167,7 @@ async function main() {
 			})
 			logseq.showMainUI()
 
-			setTimeout(() => createUnsplash(), 100)
+			setTimeout(() => initUnsplash(), 100)
 		},
 	)
 }
