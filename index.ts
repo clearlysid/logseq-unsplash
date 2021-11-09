@@ -2,15 +2,6 @@ import '@logseq/libs'
 
 const apiKey = "TjzU95V4JHVry7D_iigag7nKd940el7fMBB9KgBLpRY"; // Unsplash Dummy API key
 
-const fetchDataFromUnsplash = async (searchTerm: string, currentPage: number) => {
-	const endpoint = `https://api.unsplash.com/search/photos`
-	const params = `?query=${encodeURIComponent(searchTerm)}&per_page=30&page=${currentPage}&client_id=${apiKey}`
-	const response = await fetch(endpoint + params)
-	if (!response.ok) throw Error(response.statusText)
-	const json = await response.json()
-	return json
-}
-
 const removeChildren = (el: HTMLElement) => {
 	while (el.firstChild) {
 		el.removeChild(el.lastChild)
@@ -21,12 +12,20 @@ const removeChildren = (el: HTMLElement) => {
  * main entry
  */
 async function main() {
-	const appUserConfig = await logseq.App.getUserConfigs()
+	let elementsCreated = false
 	const container = document.createElement('div')
 	container.classList.add('unsplash-wrapper')
 	document.getElementById('app').appendChild(container)
+	
+	const appUserConfig = await logseq.App.getUserConfigs()
 
-	let elementsCreated = false
+	appUserConfig.preferredThemeMode === "dark" && container.classList.add('dark')
+
+	logseq.App.onThemeModeChanged(({ mode }) => {
+		mode === "dark"
+			? container.classList.add('dark')
+			: container.classList.remove('dark')
+	})
 
 	const createDomElements = () => {
 		// Create input field
@@ -85,12 +84,21 @@ async function main() {
 
 		document.querySelector(".show-more").addEventListener("click", () => {
 			currentPage++
-			fetchResults(searchTerm, currentPage)
+			fetchResults(searchTerm)
 		})
 
-		async function fetchResults(searchTerm: string, page: number = 1) {
+		const fetchDataFromUnsplash = async (searchTerm: string) => {
+			const endpoint = `https://api.unsplash.com/search/photos`
+			const params = `?query=${encodeURIComponent(searchTerm)}&per_page=30&page=${currentPage}&client_id=${apiKey}`
+			const response = await fetch(endpoint + params)
+			if (!response.ok) throw Error(response.statusText)
+			const json = await response.json()
+			return json
+		}
+
+		async function fetchResults(searchTerm: string) {
 			try {
-				const results = await fetchDataFromUnsplash(searchTerm, page)
+				const results = await fetchDataFromUnsplash(searchTerm)
 				addToResults(results)
 			} catch (err) {
 				console.log(err)
@@ -146,10 +154,6 @@ async function main() {
 				cleanupResults();
 				(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 			}
-		})
-
-		logseq.App.onThemeModeChanged(({ mode }) => {
-			// Change plugin window UI colors based on logseq theme
 		})
 	}
 
