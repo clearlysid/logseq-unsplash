@@ -19,7 +19,7 @@ body {
 
 :root {
 	--background-color: #ffffff;
-	--button-color: #000;
+	--button-color: #000000;
 	--text-color: #b3b3b3;
 	--border-color: #e5e5e5;
 }
@@ -34,7 +34,6 @@ body {
 	top: 20%;
 	z-index: 1;
 	border-radius: 4px;
-	/* height: 500px; */
 	height: max-content;
 	width: 400px;
 	box-shadow: 2px 4px 20px rgb(0 0 0 / 10%);
@@ -45,8 +44,6 @@ body {
 .search-form {
 	display: flex;
 	padding: 16px;
-	padding-top: 20px;
-	border-bottom: 1px solid var(--border-color);
 }
 
 .search-input {
@@ -55,7 +52,7 @@ body {
 	padding: 12px;
 	font-size: 13px;
 	border: 1px solid var(--border-color);
-	border-radius: 2px;
+	border-radius: 4px;
 	color: var(--text-color);
 	outline-color: var(--text-color);
 }
@@ -68,24 +65,32 @@ body {
 	justify-content: center;
 	color: white;
 	background: var(--button-color);
-	border-radius: 2px;
+	border-radius: 4px;
 	font-size: 13px;
 	padding: 12px 16px;
 	border: none;
 }
 
 .result-container {
+	border-top: 1px solid var(--border-color);
 	overflow-y: scroll;
 	overflow-x: hidden;
 	height: max-content;
-	max-height: 440px;
+	max-height: 400px;
 	padding: 16px;
-}
-
-.search-results {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	column-gap: 16px;
+}
+
+.show-more {
+	grid-column: 1 / span 2;
+	width: 100%;
+	padding: 12px 16px;
+	font-size: 13px;
+	margin: 0 auto;
+	border: none;
+	border-radius: 4px;
 }
 
 .result-item {
@@ -97,11 +102,11 @@ body {
 	width: 100%;
 	height: auto;
 	cursor: pointer;
-	transform: opacity 0.2s ease;
+	transition: opacity 0.2s ease;
 }
 
 .result-image:hover {
-	opacity: 0.8;
+	opacity: 0.6;
 }
 
 .result-link {
@@ -111,9 +116,5 @@ body {
 }
 
 .hidden {
-	display: none;
-}
-
-.pagination {
 	display: none;
 }
