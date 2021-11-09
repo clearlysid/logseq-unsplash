@@ -1,0 +1,21 @@
+{
+	"name": "logseq-unsplash",
+	"version": "0.0.1",
+	"description": "A Logseq plugin to add Unsplash images via slash commands 📷",
+	"main": "dist/index.html",
+	"author": "@clearlysid",
+	"license": "MIT",
+	"scripts": {
+		"dev": "parcel ./index.html --public-url ./",
+		"build": "parcel build --public-url . --no-source-maps index.html"
+	},
+	"devDependencies": {
+		"@logseq/libs": "^0.0.1-alpha.19",
+		"parcel": "^2.0.0-beta.2"
+	},
+	"dependencies": {},
+	"logseq": {
+		"id": "unsplash_image_yw5wnkfga",
+		"icon": "./logo.png"
+	}
+}
