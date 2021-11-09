@@ -66,16 +66,15 @@ async function main() {
 		}
 
 		// Hide results section on start
-		document.querySelector(".result-container").classList.add("hidden")
+		document.querySelector(".result-container").classList.add("hidden");
+		(<HTMLInputElement>(document.querySelector(".search-input"))).focus();
 
 		// Handle form submission
 		document.querySelector('.search-form').addEventListener("submit", (event: Event) => {
 			event.preventDefault()
 			currentPage = 1
 
-			const inputValue = (<HTMLInputElement>(
-				document.querySelector(".search-input")
-			)).value
+			const inputValue = (<HTMLInputElement>(document.querySelector(".search-input"))).value
 
 			cleanupResults()
 			
@@ -119,12 +118,8 @@ async function main() {
 					logseq.Editor.exitEditingMode()
 					logseq.hideMainUI()
 
-					cleanupResults()
-
-					// @ts-ignore
-					document.querySelector(".search-input").value = ""
-
-					// document.querySelector('.search-input').reset()
+					cleanupResults();
+					(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 				})
 
 				index % 2 === 0
@@ -139,9 +134,8 @@ async function main() {
 
 			if (e.key === "Escape") {
 				logseq.hideMainUI({ restoreEditingCursor: true })
-				cleanupResults()
-				// @ts-ignore
-				document.querySelector(".search-input").value = ""
+				cleanupResults();
+				(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 			} 
 		}, false)
 
@@ -149,9 +143,8 @@ async function main() {
 		document.addEventListener('click', (e) => {
 			if (!(e.target as HTMLElement).closest('.unsplash-wrapper')) {
 				logseq.hideMainUI({ restoreEditingCursor: true })
-				cleanupResults()
-				// @ts-ignore
-				document.querySelector(".search-input").value = ""
+				cleanupResults();
+				(<HTMLInputElement>(document.querySelector(".search-input"))).value = ""
 			}
 		})
 
